@@ -1,578 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Ad Blocker</title>
-    <style>
-        :root {
-            --primary: #4a6fa5;
-            --success: #4CAF50;
-            --danger: #f44336;
-            --warning: #ff9800;
-            --dark: #2c3e50;
-            --light: #f5f7fa;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            padding: 30px 0;
-            margin-bottom: 30px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-        }
-        
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            background: linear-gradient(to right, #4facfe, #00f2fe);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.8;
-            max-width: 700px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .card-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            background: rgba(0, 0, 0, 0.3);
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 10px 0;
-        }
-        
-        .stat-label {
-            opacity: 0.8;
-            font-size: 1rem;
-        }
-        
-        .ad-types {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        
-        .ad-type {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .ad-type:hover {
-            background: rgba(0, 0, 0, 0.3);
-            transform: translateX(5px);
-        }
-        
-        .ad-type.active {
-            background: var(--primary);
-            border-left: 5px solid var(--success);
-        }
-        
-        .ad-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-size: 1.2rem;
-        }
-        
-        .ad-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-        }
-        
-        .toggle-text {
-            font-size: 1.3rem;
-            font-weight: 500;
-        }
-        
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 70px;
-            height: 34px;
-        }
-        
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--danger);
-            transition: .4s;
-            border-radius: 34px;
-        }
-        
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
-        input:checked + .slider {
-            background-color: var(--success);
-        }
-        
-        input:checked + .slider:before {
-            transform: translateX(36px);
-        }
-        
-        .domain-list {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-        }
-        
-        .domain-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 0.9rem;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            transition: all 0.2s ease;
-        }
-        
-        .domain-item:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.03);
-        }
-        
-        .test-section {
-            margin-top: 40px;
-        }
-        
-        .test-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-        
-        .test-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .test-card:hover {
-            transform: translateY(-8px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .test-card h3 {
-            margin-bottom: 15px;
-            font-size: 1.4rem;
-        }
-        
-        .test-card p {
-            margin-bottom: 20px;
-            opacity: 0.8;
-            line-height: 1.6;
-        }
-        
-        .btn {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        
-        .btn:hover {
-            background: #3a5a80;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn-test {
-            background: var(--success);
-        }
-        
-        .btn-test:hover {
-            background: #3d8b40;
-        }
-        
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            font-size: 1.2rem;
-            margin-top: 10px;
-        }
-        
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--danger);
-            margin-right: 10px;
-        }
-        
-        .status-dot.active {
-            background: var(--success);
-        }
-        
-        footer {
-            text-align: center;
-            padding: 30px 0;
-            margin-top: 50px;
-            opacity: 0.7;
-            font-size: 0.9rem;
-        }
-        
-        @media (max-width: 900px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-            
-            .test-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Blocker</title>
+  <style>
+    :root {
+      --primary: #4a6fa5;
+      --success: #27ae60;
+      --danger: #e74c3c;
+      --dark: #2c3e50;
+      --light: #ecf0f1;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a2a6c;
+      color: white;
+      padding: 15px;
+      min-width: 300px;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 15px 0;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 15px;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+    
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--danger);
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--success);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .status {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    
+    .btn {
+      display: block;
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .btn:hover {
+      background: #3a5a80;
+    }
+    
+    .btn-test {
+      background: var(--success);
+    }
+    
+    .btn-test:hover {
+      background: #219653;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Ultimate Ad Blocker</h1>
-            <p class="subtitle">A comprehensive solution to block all types of ads including banners, pop-ups, video ads, tracking scripts, and more. Take back control of your browsing experience.</p>
-        </header>
-        
-        <div class="dashboard">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Blocking Dashboard</h2>
-                </div>
-                
-                <div class="stats">
-                    <div class="stat-card">
-                        <div class="stat-value">287</div>
-                        <div class="stat-label">Ad Domains Blocked</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1.2K</div>
-                        <div class="stat-label">Ads Blocked Today</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">94%</div>
-                        <div class="stat-label">Effectiveness</div>
-                    </div>
-                </div>
-                
-                <div class="toggle-container">
-                    <div class="toggle-text">Ad Blocking Status</div>
-                    <label class="switch">
-                        <input type="checkbox" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                
-                <div class="status-indicator">
-                    <div class="status-dot active"></div>
-                    <div>Protection is active - You are protected from ads and trackers</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Ad Type Coverage</h2>
-                </div>
-                
-                <div class="ad-types">
-                    <div class="ad-type active">
-                        <div class="ad-icon">🖼️</div>
-                        <div class="ad-name">Banner Ads</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">📢</div>
-                        <div class="ad-name">Popup Ads</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">🎥</div>
-                        <div class="ad-name">Video Ads</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">🔍</div>
-                        <div class="ad-name">Tracking Scripts</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">📱</div>
-                        <div class="ad-name">Mobile Ads</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">🎮</div>
-                        <div class="ad-name">In-Game Ads</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">📈</div>
-                        <div class="ad-name">Analytics Trackers</div>
-                    </div>
-                    <div class="ad-type active">
-                        <div class="ad-icon">🛒</div>
-                        <div class="ad-name">Shopping Ads</div>
-                    </div>
-                </div>
-                
-                <div class="card-header" style="margin-top: 20px;">
-                    <h2 class="card-title">Blocked Domains</h2>
-                </div>
-                
-                <div class="domain-list">
-                    <div class="domain-item">doubleclick.net</div>
-                    <div class="domain-item">googlesyndication.com</div>
-                    <div class="domain-item">adservice.google.com</div>
-                    <div class="domain-item">scorecardresearch.com</div>
-                    <div class="domain-item">adsrvr.org</div>
-                    <div class="domain-item">adnxs.com</div>
-                    <div class="domain-item">amazon-adsystem.com</div>
-                    <div class="domain-item">taboola.com</div>
-                    <div class="domain-item">outbrain.com</div>
-                    <div class="domain-item">criteo.com</div>
-                    <div class="domain-item">rubiconproject.com</div>
-                    <div class="domain-item">pubmatic.com</div>
-                    <div class="domain-item">ads-twitter.com</div>
-                    <div class="domain-item">facebook.com/ads</div>
-                    <div class="domain-item">bing.com/ads</div>
-                    <div class="domain-item">youtube.com/ads</div>
-                    <div class="domain-item">adroll.com</div>
-                    <div class="domain-item">advertising.com</div>
-                    <div class="domain-item">quantserve.com</div>
-                    <div class="domain-item">adspeed.net</div>
-                    <div class="domain-item">adtech.com</div>
-                    <div class="domain-item">adcolony.com</div>
-                    <div class="domain-item">applovin.com</div>
-                    <div class="domain-item">vungle.com</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="test-section">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Test Your Ad Blocker</h2>
-                </div>
-                
-                <p style="margin-bottom: 20px; line-height: 1.6; opacity: 0.9;">
-                    Verify the effectiveness of your ad blocker against various ad types and tracking technologies. 
-                    These tests simulate real-world advertising scenarios to ensure maximum protection.
-                </p>
-                
-                <div class="test-grid">
-                    <div class="test-card">
-                        <h3>Basic Ad Blocking</h3>
-                        <p>Test blocking of standard banner ads, pop-ups, and display advertising</p>
-                        <button class="btn btn-test">Run Test</button>
-                        <div class="status-indicator" style="justify-content: center; margin-top: 15px;">
-                            <div class="status-dot active"></div>
-                            <div>Protected</div>
-                        </div>
-                    </div>
-                    
-                    <div class="test-card">
-                        <h3>Video Ads</h3>
-                        <p>Check protection against pre-roll, mid-roll, and post-roll video advertisements</p>
-                        <button class="btn btn-test">Run Test</button>
-                        <div class="status-indicator" style="justify-content: center; margin-top: 15px;">
-                            <div class="status-dot active"></div>
-                            <div>Protected</div>
-                        </div>
-                    </div>
-                    
-                    <div class="test-card">
-                        <h3>Tracking & Analytics</h3>
-                        <p>Verify blocking of user tracking scripts and analytics services</p>
-                        <button class="btn btn-test">Run Test</button>
-                        <div class="status-indicator" style="justify-content: center; margin-top: 15px;">
-                            <div class="status-dot"></div>
-                            <div>Needs Improvement</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <footer>
-            <p>Ultimate Ad Blocker v3.5.2 | Protected since 05/31/2025</p>
-            <p>Last updated: Today at 14:36 | Blocking all known ad networks</p>
-        </footer>
+  <div class="header">
+    <h1>Advanced Ad Blocker</h1>
+    <p>Blocks ads from 300+ networks</p>
+  </div>
+  
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="counter">0</div>
+      <div class="stat-label">Domains</div>
     </div>
-    
-    <script>
-        // Toggle ad blocking status
-        const toggle = document.querySelector('.switch input');
-        const statusDot = document.querySelector('.status-dot');
-        const statusText = document.querySelector('.status-indicator div:last-child');
-        
-        toggle.addEventListener('change', function() {
-            if (this.checked) {
-                statusDot.classList.add('active');
-                statusText.textContent = 'Protection is active - You are protected from ads and trackers';
-            } else {
-                statusDot.classList.remove('active');
-                statusText.textContent = 'Protection is disabled - You are exposed to ads and trackers';
-            }
-        });
-        
-        // Simulate test buttons
-        const testButtons = document.querySelectorAll('.btn-test');
-        testButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const card = this.closest('.test-card');
-                const statusDot = card.querySelector('.status-dot');
-                const statusText = card.querySelector('.status-indicator div:last-child');
-                
-                // Show testing in progress
-                const originalText = this.textContent;
-                this.textContent = 'Testing...';
-                this.disabled = true;
-                
-                // Simulate test after delay
-                setTimeout(() => {
-                    this.textContent = originalText;
-                    this.disabled = false;
-                    
-                    // Randomly set test result (85% chance of success)
-                    if (Math.random() > 0.15) {
-                        statusDot.classList.add('active');
-                        statusText.textContent = 'Protected';
-                    } else {
-                        statusDot.classList.remove('active');
-                        statusText.textContent = 'Needs Improvement';
-                    }
-                }, 1500);
-            });
-        });
-        
-        // Ad type selection
-        const adTypes = document.querySelectorAll('.ad-type');
-        adTypes.forEach(type => {
-            type.addEventListener('click', function() {
-                this.classList.toggle('active');
-            });
-        });
-    </script>
+    <div class="stat">
+      <div class="stat-value" id="requests">0</div>
+      <div class="stat-label">Blocked</div>
+    </div>
+  </div>
+  
+  <div class="toggle-container">
+    <span>Ad Blocking</span>
+    <label class="switch">
+      <input type="checkbox" id="toggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+  
+  <div id="status" class="status">Blocking enabled</div>
+  
+  <button class="btn btn-test" id="testBtn">Run Tests</button>
+
+  <script src="popup.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
-      "urlFilter": "doubleclick.net",
+      "urlFilter": "||doubleclick.net",
       "resourceTypes": ["script", "image", "xmlhttprequest"]
     }
   },
@@ -13,7 +13,7 @@
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
-      "urlFilter": "scorecardresearch.com",
+      "urlFilter": "||scorecardresearch.com",
       "resourceTypes": ["image", "script", "xmlhttprequest"]
     }
   },
@@ -22,7 +22,7 @@
     "priority": 1,
     "action": { "type": "block" },
     "condition": {
-      "urlFilter": "securepubads.g.doubleclick.net",
+      "urlFilter": "||securepubads.g.doubleclick.net",
       "resourceTypes": ["script"]
     }
   }

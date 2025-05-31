@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Enhanced Ad Blocker",
-  "version": "2.0",
-  "description": "Blocks ads from 100+ ad networks with smart filtering",
+  "version": "3.0",
+  "description": "Blocks ads from 300+ ad networks with smart filtering",
   "permissions": [
     "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
     "storage"
   ],
   "host_permissions": ["<all_urls>"],
@@ -23,5 +24,12 @@
     "16": "icons/16.png",
     "48": "icons/48.png",
     "128": "icons/128.png"
+  },
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "ruleset_1",
+      "enabled": true,
+      "path": "rules.json"
+    }]
   }
 }

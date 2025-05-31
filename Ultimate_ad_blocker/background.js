@@ -1,31 +1,48 @@
-// Preprocess domains to remove duplicates and invalid entries
+// Enhanced domain validation
+function isValidDomain(domain) {
+  return /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/.test(domain);
+}
+
+// Improved preprocessing
 function preprocessDomains(domains) {
   const cleaned = [];
   const seen = new Set();
   
   for (const domain of domains) {
-    // Remove protocol and paths
-    const clean = domain
-      .replace(/https?:\/\//, '')
-      .replace(/\/.*$/, '')
-      .replace(/^\*\./, '')
-      .toLowerCase();
+    try {
+      let clean = domain
+        .replace(/https?:\/\//g, '')
+        .replace(/\/.*$/g, '')
+        .replace(/^\*\./g, '')
+        .replace(/\?.*$/g, '')
+        .toLowerCase()
+        .trim();
       
-    // Skip invalid entries and duplicates
-    if (!clean || seen.has(clean)) continue;
-    
-    // Skip IP addresses and localhost
-    if (/^(\d+\.)+\d+$/.test(clean) || clean.includes('localhost')) continue;
-    
-    seen.add(clean);
-    cleaned.push(clean);
+      if (!clean || !isValidDomain(clean)) {
+        console.warn(`Invalid domain format: ${domain}`);
+        continue;
+      }
+      
+      if (/^(\d+\.)+\d+$/.test(clean) || 
+          clean.includes('localhost') || 
+          seen.has(clean)) {
+        continue;
+      }
+      
+      seen.add(clean);
+      cleaned.push(clean);
+    } catch (e) {
+      console.error(`Error processing domain: ${domain}`, e);
+    }
   }
   
+  console.log(`Cleaned ${cleaned.length} valid domains`);
   return cleaned;
 }
 
+// Ad domains list (preprocessed)
 const AD_DOMAINS = preprocessDomains([
-  // Existing domains
+// Existing domains
   "doubleclick.net",
   "googlesyndication.com",
   "adsafeprotected.com",
@@ -507,35 +524,245 @@ const AD_DOMAINS = preprocessDomains([
   "zqtk.net"
 ]);
 
-const AD_RULES = AD_DOMAINS.flatMap((domain, index) => {
-  const baseRule = {
-    id: index * 2 + 1,
-    priority: 1,
-    action: { type: "block" },
-    condition: {
-      urlFilter: `||${domain}^`,
-      resourceTypes: ["script", "xmlhttprequest", "sub_frame"]
-    }
-  };
+// Rule management
+let nextRuleId = 1;
+
+// Initialize storage
+async function initStorage() {
+  const data = await chrome.storage.local.get(['nextRuleId', 'enabled']);
+  nextRuleId = data.nextRuleId || 1;
   
-  const imageRule = {
-    id: index * 2 + 2,
-    priority: 1,
-    action: { type: "block" },
-    condition: {
-      urlFilter: `||${domain}^`,
-      resourceTypes: ["image"],
-      excludedInitiatorDomains: [
-        "wikipedia.org",
-        "github.com",
-        "stackoverflow.com",
-        "example.com",
-        "yoursite.com"
-      ]
-    }
-  };
+  if (typeof data.enabled === 'undefined') {
+    await chrome.storage.local.set({ enabled: true });
+  }
   
-  return [baseRule, imageRule];
+  console.log(`Storage initialized. NextRuleID: ${nextRuleId}`);
+}
+
+// Get next unique rule ID (persistent)
+async function getNextRuleId() {
+  const id = nextRuleId;
+  nextRuleId++;
+  await chrome.storage.local.set({ nextRuleId });
+  return id;
+}
+
+// Generate rules with unique IDs
+async function generateRules() {
+  const rules = [];
+  
+  for (const domain of AD_DOMAINS) {
+    const baseId = await getNextRuleId();
+    const imageId = await getNextRuleId();
+    
+    rules.push({
+      id: baseId,
+      priority: 1,
+      action: { type: "block" },
+      condition: {
+        urlFilter: `||${domain}^`,
+        resourceTypes: ["script", "xmlhttprequest", "sub_frame"]
+      }
+    });
+    
+    rules.push({
+      id: imageId,
+      priority: 1,
+      action: { type: "block" },
+      condition: {
+        urlFilter: `||${domain}^`,
+        resourceTypes: ["image"],
+        excludedInitiatorDomains: [
+          "wikipedia.org",
+          "github.com",
+          "stackoverflow.com",
+          "reddit.com",
+          "medium.com",
+          "gov.uk",
+          "nytimes.com"
+        ]
+      }
+    });
+  }
+  
+  console.log(`Generated ${rules.length} rules`);
+  return rules;
+}
+
+// Update rules in chunks
+async function updateRules(rules) {
+  const chunkSize = 100;
+  
+  // Get existing rules to remove
+  const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+  const removeIds = existingRules.map(rule => rule.id);
+  
+  if (removeIds.length > 0) {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: removeIds
+    });
+    console.log(`Removed ${removeIds.length} old rules`);
+  }
+  
+  // Add new rules in chunks
+  for (let i = 0; i < rules.length; i += chunkSize) {
+    const chunk = rules.slice(i, i + chunkSize);
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      addRules: chunk
+    });
+  }
+}
+
+// Core blocking state management
+async function updateBlockingState() {
+  const { enabled } = await chrome.storage.local.get("enabled");
+  
+  try {
+    if (enabled) {
+      console.log("Enabling ad blocking...");
+      const rules = await generateRules();
+      await updateRules(rules);
+      console.log("Rules applied successfully");
+      
+      // Update UI only if popup is open
+      chrome.runtime.sendMessage({ 
+        action: "statusUpdate", 
+        status: "active",
+        domainCount: AD_DOMAINS.length,
+        ruleCount: rules.length
+      }, () => {
+        // Connection error handling
+        if (chrome.runtime.lastError) {
+          console.log("Popup not open, message not sent");
+        }
+      });
+    } else {
+      // Remove all rules when disabling
+      const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+      const removeIds = existingRules.map(rule => rule.id);
+      
+      if (removeIds.length > 0) {
+        await chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: removeIds
+        });
+        console.log(`Removed ${removeIds.length} rules`);
+      }
+      
+      console.log("Ad blocking disabled");
+      
+      // Update UI only if popup is open
+      chrome.runtime.sendMessage({ 
+        action: "statusUpdate", 
+        status: "disabled" 
+      }, () => {
+        // Connection error handling
+        if (chrome.runtime.lastError) {
+          console.log("Popup not open, message not sent");
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Rule update error:", error);
+    
+    // Handle ID conflicts
+    if (error.message.includes("does not have a unique ID")) {
+      const badIdMatch = error.message.match(/id (\d+)/);
+      if (badIdMatch) {
+        const badId = parseInt(badIdMatch[1]);
+        console.warn(`Resolving ID conflict: ${badId}`);
+        nextRuleId = badId + 1;
+        await chrome.storage.local.set({ nextRuleId });
+        return updateBlockingState(); // Retry
+      }
+    }
+    
+    // Send error to popup only if open
+    chrome.runtime.sendMessage({ 
+      action: "statusUpdate", 
+      status: "error",
+      error: error.message
+    }, () => {
+      // Connection error handling
+      if (chrome.runtime.lastError) {
+        console.log("Popup not open, error not sent");
+      }
+    });
+  }
+}
+
+// Test functions
+async function runTests() {
+  console.log("Running ad blocker tests...");
+  
+  // Test 1: Rule ID uniqueness
+  let testPassed = true;
+  const idSet = new Set();
+  
+  const rules = await generateRules();
+  for (const rule of rules) {
+    if (idSet.has(rule.id)) {
+      console.error(`ID conflict detected: ${rule.id}`);
+      testPassed = false;
+    }
+    idSet.add(rule.id);
+  }
+  
+  // Test 2: Domain coverage
+  const ruleDomains = new Set();
+  rules.forEach(rule => {
+    const domainMatch = rule.condition.urlFilter.match(/\|\|([\w.-]+)\^/);
+    if (domainMatch) ruleDomains.add(domainMatch[1]);
+  });
+  
+  AD_DOMAINS.forEach(domain => {
+    if (!ruleDomains.has(domain)) {
+      console.error(`Domain not covered: ${domain}`);
+      testPassed = false;
+    }
+  });
+  
+  console.log(`Tests ${testPassed ? "passed" : "failed"}`);
+  return testPassed;
+}
+
+// Initialize extension
+chrome.runtime.onInstalled.addListener(async (details) => {
+  console.log("Extension installed");
+  await initStorage();
+  
+  if (details.reason === 'install') {
+    await chrome.storage.local.set({ nextRuleId: 1 });
+    nextRuleId = 1;
+  }
+  
+  await updateBlockingState();
 });
 
-// ... rest of the code remains the same ...
+chrome.runtime.onStartup.addListener(async () => {
+  console.log("Browser started");
+  await initStorage();
+  await updateBlockingState();
+});
+
+// Message handling
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "updateBlocking") {
+    updateBlockingState().then(() => {
+      sendResponse({ success: true });
+    });
+    return true; // Keep message channel open for async response
+  }
+  else if (message.action === "runTests") {
+    runTests().then(success => {
+      sendResponse({ success });
+    });
+    return true; // Keep message channel open
+  }
+  return false;
+});
+
+// Initialize on load
+(async () => {
+  await initStorage();
+  console.log("Background script loaded");
+})();
